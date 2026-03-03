@@ -15,6 +15,8 @@ export default function MarketplacePage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedArtisan, setSelectedArtisan] = useState<string>('all');
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [sortBy, setSortBy] = useState<string>('newest');
 
@@ -22,21 +24,27 @@ export default function MarketplacePage() {
     fetch('http://localhost/api/controllers/products.php')
       .then(res => res.json())
       .then(data => {
-        const formatted = data.map((p: any) => ({
-          ...p,
-          id: 'db-' + p.id,
-          images: JSON.parse(p.images),
-          isActive: Boolean(p.is_active),
-        }));
-        setProducts([...mockProducts, ...formatted]);
+        if (Array.isArray(data)) {
+          const formatted = data.map((p: any) => ({
+            ...p,
+            id: 'db-' + p.id,
+            images: typeof p.images === 'string' ? JSON.parse(p.images) : p.images,
+            isActive: Boolean(p.is_active),
+          }));
+          setProducts([...mockProducts, ...formatted]);
+        }
       })
       .catch(() => setProducts(mockProducts));
   }, []);
 
   const categories = ['all', 'Baskets', 'Pottery', 'Textiles', 'Leather Goods', 'Jewelry'];
+  const artisans = ['all', ...new Set(products.map(p => p.artisanName))];
+  const locations = ['all', ...new Set(products.map(p => p.artisanLocation))];
 
   const filteredProducts = products
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+    .filter(p => selectedArtisan === 'all' || p.artisanName === selectedArtisan)
+    .filter(p => selectedLocation === 'all' || p.artisanLocation === selectedLocation)
     .filter(p => p.price >= priceRange[0] && p.price <= priceRange[1])
     .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -99,10 +107,42 @@ export default function MarketplacePage() {
                           : 'bg-harar-sand/50 text-harar-brown hover:bg-harar-sand'
                       }`}
                     >
-                      {category === 'all' ? 'All Products' : category}
+                      {category === 'all' ? 'All Categories' : category}
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Artisan Filter */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-harar-brown mb-3">Artisan</h3>
+                <select
+                  value={selectedArtisan}
+                  onChange={(e) => setSelectedArtisan(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border-2 border-harar-sand focus:border-harar-gold focus:outline-none text-harar-brown text-sm"
+                >
+                  {artisans.map((artisan, idx) => (
+                    <option key={`artisan-${idx}`} value={artisan}>
+                      {artisan === 'all' ? 'All Artisans' : artisan}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Location Filter */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-harar-brown mb-3">Location</h3>
+                <select
+                  value={selectedLocation}
+                  onChange={(e) => setSelectedLocation(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border-2 border-harar-sand focus:border-harar-gold focus:outline-none text-harar-brown text-sm"
+                >
+                  {locations.map((location, idx) => (
+                    <option key={`location-${idx}`} value={location}>
+                      {location === 'all' ? 'All Locations' : location}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               {/* Price Range */}

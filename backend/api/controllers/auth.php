@@ -92,6 +92,18 @@ switch($method) {
             $stmt->execute();
             echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
         }
+        // Get all artisans
+        elseif(isset($_GET['all_artisans'])) {
+            $stmt = $db->prepare("SELECT id, name, email, location, phone, is_verified, is_active, created_at FROM users WHERE role = 'artisan'");
+            $stmt->execute();
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        }
+        // Get all buyers
+        elseif(isset($_GET['all_buyers'])) {
+            $stmt = $db->prepare("SELECT id, name, email, phone, is_active, created_at FROM users WHERE role = 'buyer'");
+            $stmt->execute();
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        }
         break;
         
     case 'PUT':
@@ -111,6 +123,16 @@ switch($method) {
         if(isset($data->action) && $data->action === 'reject') {
             $stmt = $db->prepare("DELETE FROM users WHERE id = ? AND role = 'artisan' AND is_verified = 0");
             if($stmt->execute([$data->user_id])) {
+                echo json_encode(["success" => true]);
+            } else {
+                echo json_encode(["success" => false]);
+            }
+        }
+        
+        // Toggle user status
+        if(isset($data->action) && $data->action === 'toggle_status') {
+            $stmt = $db->prepare("UPDATE users SET is_active = ? WHERE id = ?");
+            if($stmt->execute([$data->is_active, $data->user_id])) {
                 echo json_encode(["success" => true]);
             } else {
                 echo json_encode(["success" => false]);

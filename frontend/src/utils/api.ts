@@ -5,7 +5,14 @@ export const api = {
   getProducts: async (params?: { artisan_id?: number; category?: string }) => {
     const query = new URLSearchParams(params as any).toString();
     const res = await fetch(`${API_URL}/products.php?${query}`);
-    return res.json();
+    const text = await res.text();
+    if (!text) return [];
+    try {
+      return JSON.parse(text);
+    } catch(e) {
+      console.error('Failed to parse:', text);
+      return [];
+    }
   },
 
   getProduct: async (id: number) => {
@@ -37,7 +44,7 @@ export const api = {
     return res.json();
   },
 
-  deleteProduct: async (id: number) => {
+  deleteProduct: async (id: string) => {
     const res = await fetch(`${API_URL}/products.php?id=${id}`, {
       method: 'DELETE',
     });

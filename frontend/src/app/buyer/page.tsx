@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Heart, Package, TrendingUp, LogOut, Home, Trash2, Plus, Minus, Clock, Gavel } from 'lucide-react';
+import { ShoppingCart, Heart, Package, TrendingUp, LogOut, Home, Trash2, Plus, Minus, Clock, Gavel, Truck, Star, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import MetricCard from '@/components/ui/MetricCard';
 import { CategoryPieChart, RevenueLineChart } from '@/charts/Charts';
@@ -13,7 +13,7 @@ import { useCart } from '@/contexts/CartContext';
 import PaymentMethod from '@/components/ui/PaymentMethod';
 
 export default function BuyerDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'wishlist' | 'auctions' | 'cart'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'tracking' | 'reviews' | 'wishlist' | 'auctions' | 'cart'>('overview');
   const { items, removeFromCart, updateQuantity, clearCart, total, itemCount } = useCart();
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -22,6 +22,10 @@ export default function BuyerDashboard() {
   const [userName, setUserName] = useState('Buyer User');
   const [analytics, setAnalytics] = useState<any>(null);
   const [orders, setOrders] = useState<any[]>([]);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewData, setReviewData] = useState({ product_id: '', rating: 5, comment: '' });
 
   const buyerOrders = mockOrders.filter(o => o.buyerId === 'b1');
   const totalSpent = buyerOrders.reduce((sum, order) => sum + order.total, 0);
@@ -40,14 +44,20 @@ export default function BuyerDashboard() {
         .then(res => res.json())
         .then(data => setOrders(data))
         .catch(() => {});
+      
+      fetch(`http://localhost/api/controllers/reviews.php?buyer_id=${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => setReviews(data || []))
+        .catch(() => {});
     }
   }, []);
 
   useEffect(() => {
     if (activeTab === 'auctions') {
-      fetch('http://localhost/api/controllers/auctions.php?action=approved')
+      fetch('http://localhost/api/controllers/auctions.php?approved=1')
         .then(res => res.json())
-        .then(data => setAuctions(data.auctions || []));
+        .then(data => setAuctions(data || []))
+        .catch(() => setAuctions([]));
     }
   }, [activeTab]);
 
@@ -58,17 +68,18 @@ export default function BuyerDashboard() {
     const res = await fetch('http://localhost/api/controllers/auctions.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'bid', auction_id: auctionId, buyer_id: 1, amount })
+      body: JSON.stringify({ action: 'bid', auction_id: auctionId, bidder_id: 1, bidder_name: userName, amount })
     });
     const data = await res.json();
     if (data.success) {
       alert('Bid placed successfully!');
       setBidAmounts(prev => ({ ...prev, [auctionId]: '' }));
-      fetch('http://localhost/api/controllers/auctions.php?action=approved')
+      fetch('http://localhost/api/controllers/auctions.php?approved=1')
         .then(res => res.json())
-        .then(data => setAuctions(data.auctions || []));
+        .then(data => setAuctions(data || []))
+        .catch(() => {});
     } else {
-      alert(data.message || 'Failed to place bid');
+      alert(data.error || 'Failed to place bid');
     }
   };
 
@@ -80,6 +91,69 @@ export default function BuyerDashboard() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
     return `${hours}h ${minutes}m`;
+  };
+
+  const handleCheckoutOrder = async () => {
+    if (!paymentMethod) {
+      alert('Please select a payment method');
+      return;
+    }
+
+    const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
+    const params = new URLSearchParams();
+    params.append('buyer_id', String(currentUser.id || 1));
+    params.append('buyer_name', currentUser.name);
+    params.append('artisan_id', String(items[0]?.artisan_id || 1));
+    params.append('total', String(total));
+    params.append('payment_method', paymentMethod);
+    params.append('delivery_address', 'Default Address');
+    params.append('products', JSON.stringify(items.map(item => ({
+      product_id: item.id,
+      product_name: item.name,
+      quantity: item.quantity,
+      price: item.discount ? calculateDiscount(item.price, item.discount) : item.price
+    }))));
+
+    try {
+      const res = await fetch('http://localhost/api/controllers/orders.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: params.toString()
+      });
+
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error('API returned invalid JSON:', text);
+        alert('Server error: ' + text.substring(0, 100));
+        return;
+      }
+
+      if (data.success) {
+        clearCart();
+        setShowCheckout(false);
+        alert(`Order placed successfully! Order #${data.order_number}`);
+        
+        fetch(`http://localhost/api/controllers/orders.php?buyer_id=${currentUser.id}`)
+          .then(res => res.json())
+          .then(data => setOrders(data))
+          .catch(() => {});
+        
+        fetch(`http://localhost/api/controllers/analytics.php?user_id=${currentUser.id}&role=buyer`)
+          .then(res => res.json())
+          .then(data => setAnalytics(data))
+          .catch(() => {});
+        
+        setActiveTab('orders');
+      } else {
+        alert('Order failed: ' + (data.error || data.message));
+      }
+    } catch (err) {
+      console.error('Order error:', err);
+      alert('Error placing order: ' + err);
+    }
   };
 
   return (
@@ -94,6 +168,8 @@ export default function BuyerDashboard() {
           {[
             { id: 'overview', label: 'Dashboard', icon: Home },
             { id: 'orders', label: 'My Orders', icon: ShoppingCart },
+            { id: 'tracking', label: 'Track Orders', icon: Truck },
+            { id: 'reviews', label: 'Reviews', icon: Star },
             { id: 'wishlist', label: 'Wishlist', icon: Heart },
             { id: 'auctions', label: 'Auctions', icon: TrendingUp },
             { id: 'cart', label: 'Cart', icon: Package, badge: itemCount },
@@ -101,14 +177,14 @@ export default function BuyerDashboard() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id as any)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl mb-2 transition-all relative ${
+              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg mb-1 transition-all relative text-sm ${
                 activeTab === item.id ? 'bg-harar-gold text-white' : 'text-harar-brown hover:bg-harar-sand'
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              {item.label}
+              <item.icon className="h-4 w-4" />
+              <span className="truncate">{item.label}</span>
               {'badge' in item && item.badge > 0 && (
-                <span className="absolute right-4 bg-harar-rust text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute right-2 bg-harar-rust text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                   {item.badge}
                 </span>
               )}
@@ -130,194 +206,6 @@ export default function BuyerDashboard() {
 
       <div className="ml-64 p-8">
         <div className="max-w-7xl mx-auto">
-          {activeTab === 'overview' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h1 className="text-3xl font-bold text-harar-brown mb-8">Dashboard Overview</h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <MetricCard title="Total Orders" value={analytics?.totalOrders || 0} icon={ShoppingCart} />
-                <MetricCard title="Total Spent" value={formatCurrency(analytics?.totalSpent || 0)} icon={TrendingUp} />
-                <MetricCard title="Wishlist Items" value={wishlistItems.length} icon={Heart} />
-                <MetricCard title="Pending Deliveries" value={analytics?.pendingDeliveries || 0} icon={Package} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div className="card">
-                  <h3 className="text-xl font-semibold text-harar-brown mb-4">Spending by Category</h3>
-                  <CategoryPieChart data={analytics?.categorySpending?.map((c: any) => ({ name: c.category, value: parseFloat(c.spent) })) || []} />
-                </div>
-                <div className="card">
-                  <h3 className="text-xl font-semibold text-harar-brown mb-4">Spending History</h3>
-                  <RevenueLineChart data={analytics?.monthlySpending?.map((m: any) => ({ month: m.month, sales: parseFloat(m.spent) })) || []} />
-                </div>
-              </div>
-
-              <div className="card">
-                <h3 className="text-xl font-semibold text-harar-brown mb-4">Recent Orders</h3>
-                <div className="space-y-4">
-                  {orders.slice(0, 3).map((order) => (
-                    <div key={order.id} className="flex items-center justify-between p-4 bg-harar-sand/30 rounded-xl">
-                      <div>
-                        <p className="font-semibold text-harar-brown">{order.order_number}</p>
-                        <p className="text-sm text-harar-brown/70">{JSON.parse(order.products || '[]').length} items • {formatDate(order.created_at)}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-harar-gold">{formatCurrency(order.total)}</p>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                          {order.status}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'orders' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h1 className="text-3xl font-bold text-harar-brown mb-8">Order History</h1>
-
-              <div className="card">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-harar-sand">
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Order ID</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Date</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Items</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Total</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Status</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {orders.map((order) => (
-                        <tr key={order.id} className="border-b border-harar-sand/50 hover:bg-harar-sand/20">
-                          <td className="py-4 px-4 font-medium text-harar-brown">{order.order_number}</td>
-                          <td className="py-4 px-4 text-harar-brown/70">{formatDate(order.created_at)}</td>
-                          <td className="py-4 px-4 text-harar-brown/70">{JSON.parse(order.products || '[]').length} item(s)</td>
-                          <td className="py-4 px-4 text-harar-brown font-semibold">{formatCurrency(order.total)}</td>
-                          <td className="py-4 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <button className="btn-primary py-2 px-4 text-sm">View Details</button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'wishlist' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h1 className="text-3xl font-bold text-harar-brown mb-8">My Wishlist</h1>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {wishlistItems.map((product) => (
-                  <div key={product.id} className="card group">
-                    <div className="relative overflow-hidden rounded-xl mb-4">
-                      <img src={product.images[0]} alt={product.name} className="w-full h-56 object-cover" />
-                      {product.discount && (
-                        <div className="absolute top-3 right-3 bg-harar-rust text-white px-3 py-1 rounded-full text-sm font-semibold">
-                          -{product.discount}%
-                        </div>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-harar-brown mb-2">{product.name}</h3>
-                    <p className="text-harar-brown/70 text-sm mb-3">{product.artisanName}</p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl font-bold text-harar-gold">{formatCurrency(product.price)}</span>
-                      <div className="flex gap-2">
-                        <button className="btn-primary py-2 px-4 text-sm">Add to Cart</button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition">
-                          <Heart className="h-5 w-5 text-red-500 fill-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'auctions' && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <h1 className="text-3xl font-bold text-harar-brown mb-8">Live Auctions</h1>
-
-              {auctions.length === 0 ? (
-                <div className="card text-center py-12">
-                  <Gavel className="h-24 w-24 text-harar-brown/30 mx-auto mb-4" />
-                  <h2 className="text-2xl font-bold text-harar-brown mb-2">No active auctions</h2>
-                  <p className="text-harar-brown/70">Check back later for new auctions</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {auctions.map((auction) => (
-                    <div key={auction.id} className="card">
-                      <div className="relative overflow-hidden rounded-xl mb-4">
-                        <img src={auction.product_image || '/placeholder.jpg'} alt={auction.product_name} className="w-full h-56 object-cover" />
-                        <div className="absolute top-3 right-3 bg-harar-gold text-white px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
-                          {auction.status === 'live' ? getTimeRemaining(auction.end_date) : 'Scheduled'}
-                        </div>
-                      </div>
-
-                      <h3 className="text-xl font-semibold text-harar-brown mb-2">{auction.product_name}</h3>
-                      <p className="text-sm text-harar-brown/70 mb-4">{auction.description}</p>
-
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-xs text-harar-brown/60">Starting Bid</p>
-                          <p className="text-lg font-bold text-harar-gold">${auction.starting_bid}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-harar-brown/60">Current Bid</p>
-                          <p className="text-lg font-bold text-harar-terracotta">${auction.current_bid || auction.starting_bid}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-harar-brown/60">Min Increment</p>
-                          <p className="text-sm font-semibold text-harar-brown">${auction.min_increment}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-harar-brown/60">Total Bids</p>
-                          <p className="text-sm font-semibold text-harar-brown">{auction.bid_count || 0}</p>
-                        </div>
-                      </div>
-
-                      {auction.status === 'live' ? (
-                        <div className="flex gap-2">
-                          <input
-                            type="number"
-                            placeholder="Enter bid amount"
-                            value={bidAmounts[auction.id] || ''}
-                            onChange={(e) => setBidAmounts(prev => ({ ...prev, [auction.id]: e.target.value }))}
-                            className="input-field flex-1"
-                            min={(parseFloat(auction.current_bid || auction.starting_bid) + parseFloat(auction.min_increment)).toFixed(2)}
-                            step={auction.min_increment}
-                          />
-                          <button onClick={() => placeBid(auction.id)} className="btn-primary px-6">
-                            <Gavel className="h-5 w-5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="bg-harar-sand/50 p-3 rounded-lg text-center">
-                          <p className="text-sm font-semibold text-harar-brown">Starts: {new Date(auction.scheduled_date).toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </motion.div>
-          )}
-
           {activeTab === 'cart' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <div className="flex justify-between items-center mb-8">
@@ -392,54 +280,7 @@ export default function BuyerDashboard() {
                         <div className="space-y-4">
                           <h3 className="font-semibold text-harar-brown">Select Payment Method</h3>
                           <PaymentMethod onSelect={setPaymentMethod} />
-                          <button
-                            onClick={async () => {
-                              if (paymentMethod) {
-                                const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                                const orderData = {
-                                  buyer_id: currentUser.id,
-                                  buyer_name: currentUser.name,
-                                  artisan_id: items[0]?.artisan_id || 1,
-                                  total: total,
-                                  payment_method: paymentMethod,
-                                  delivery_address: 'Default Address',
-                                  products: items.map(item => ({
-                                    product_id: item.id,
-                                    product_name: item.name,
-                                    quantity: item.quantity,
-                                    price: item.discount ? calculateDiscount(item.price, item.discount) : item.price
-                                  }))
-                                };
-                                
-                                const res = await fetch('http://localhost/api/controllers/orders.php', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify(orderData)
-                                });
-                                
-                                const data = await res.json();
-                                if (data.success) {
-                                  clearCart();
-                                  setShowCheckout(false);
-                                  alert(`Order placed successfully! Order #${data.order_number}`);
-                                  
-                                  fetch(`http://localhost/api/controllers/orders.php?buyer_id=${currentUser.id}`)
-                                    .then(res => res.json())
-                                    .then(data => setOrders(data));
-                                  
-                                  fetch(`http://localhost/api/controllers/analytics.php?user_id=${currentUser.id}&role=buyer`)
-                                    .then(res => res.json())
-                                    .then(data => setAnalytics(data));
-                                  
-                                  setActiveTab('orders');
-                                } else {
-                                  alert('Order failed: ' + data.error);
-                                }
-                              }
-                            }}
-                            disabled={!paymentMethod}
-                            className="btn-primary w-full disabled:opacity-50"
-                          >
+                          <button onClick={handleCheckoutOrder} className="btn-primary w-full">
                             Place Order
                           </button>
                         </div>

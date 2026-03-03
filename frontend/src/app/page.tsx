@@ -33,11 +33,11 @@ export default function Home() {
               </Link>
             </div>
             <div className="flex space-x-4">
-              <Link href="/auth/login" className="text-harar-brown hover:text-harar-gold transition">
+              <Link href="/auth" className="px-6 py-2 border-2 border-harar-gold text-harar-brown rounded-full hover:bg-harar-gold hover:text-white transition font-semibold">
                 Login
               </Link>
-              <Link href="/auth/register" className="btn-primary">
-                Register
+              <Link href="/auth" className="btn-primary">
+                Get Started
               </Link>
             </div>
           </div>
