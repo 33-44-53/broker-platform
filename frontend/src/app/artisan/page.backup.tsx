@@ -266,25 +266,10 @@ export default function ArtisanDashboard() {
                               >
                                 <Edit className="h-4 w-4 text-harar-brown" />
                               </button>
-                              <button onClick={async () => {
-                                const updated = { ...product, isActive: !product.isActive };
-                                try {
-                                  await fetch(`http://localhost:8000/api/products/${product.id}`, {
-                                    method: 'PUT',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ ...product, is_active: !product.isActive })
-                                  });
-                                } catch (error) { console.error('Toggle error:', error); }
-                              }} className="p-2 hover:bg-harar-sand rounded-lg transition">
+                              <button className="p-2 hover:bg-harar-sand rounded-lg transition">
                                 {product.isActive ? <ToggleRight className="h-4 w-4 text-green-600" /> : <ToggleLeft className="h-4 w-4 text-gray-400" />}
                               </button>
-                              <button onClick={async () => {
-                                if (confirm('Delete this product?')) {
-                                  try {
-                                    await fetch(`http://localhost:8000/api/products/${product.id}`, { method: 'DELETE' });
-                                  } catch (error) { console.error('Delete error:', error); }
-                                }
-                              }} className="p-2 hover:bg-red-50 rounded-lg transition">
+                              <button className="p-2 hover:bg-red-50 rounded-lg transition">
                                 <Trash2 className="h-4 w-4 text-red-600" />
                               </button>
                             </div>

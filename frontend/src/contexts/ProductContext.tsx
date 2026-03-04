@@ -42,17 +42,39 @@ export function ProductProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addProduct = async (productData: any) => {
-    await api.createProduct(productData);
-    await refreshProducts();
+    const newProduct = { ...productData, id: Date.now().toString() };
+    setProducts(prev => [...prev, newProduct]);
+    try {
+      const payload = { ...productData };
+      if (Array.isArray(payload.images)) {
+        payload.images = JSON.stringify(payload.images);
+      }
+      await api.createProduct(payload);
+      await refreshProducts();
+    } catch (error) {
+      console.error('API error:', error);
+    }
   };
 
   const updateProduct = async (id: string, productData: Partial<Product>) => {
-    await api.updateProduct({ id, ...productData });
+    try {
+      const payload = { id, ...productData };
+      if (Array.isArray(payload.images)) {
+        payload.images = JSON.stringify(payload.images);
+      }
+      await api.updateProduct(payload);
+    } catch (error) {
+      console.error('API error:', error);
+    }
     await refreshProducts();
   };
 
   const deleteProduct = async (id: string) => {
-    await api.deleteProduct(id);
+    try {
+      await api.deleteProduct(id);
+    } catch (error) {
+      console.error('API error:', error);
+    }
     await refreshProducts();
   };
 
