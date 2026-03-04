@@ -56,17 +56,24 @@ export function ProductProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateProduct = async (id: string, productData: Partial<Product>) => {
+  const updateProduct = async (id: string, productData: Partial<Product> | null) => {
+    if (productData === null) {
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } else {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, ...productData } : p));
+    }
     try {
-      const payload = { id, ...productData };
-      if (Array.isArray(payload.images)) {
-        payload.images = JSON.stringify(payload.images);
+      if (productData !== null) {
+        const payload = { id, ...productData };
+        if (Array.isArray(payload.images)) {
+          payload.images = JSON.stringify(payload.images);
+        }
+        await api.updateProduct(payload);
       }
-      await api.updateProduct(payload);
     } catch (error) {
       console.error('API error:', error);
+      await refreshProducts();
     }
-    await refreshProducts();
   };
 
   const deleteProduct = async (id: string) => {

@@ -16,6 +16,7 @@ export default function ArtisanDashboard() {
   const [showEditProductModal, setShowEditProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const { products, addProduct, updateProduct } = useProducts();
   const [userName, setUserName] = useState('Artisan User');
   const [analytics, setAnalytics] = useState<any>(null);
@@ -30,9 +31,12 @@ export default function ArtisanDashboard() {
   });
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [profile, setProfile] = useState({
-    name: 'Fatima Ahmed',
-    location: 'Jugol, Harar',
-    phone: '+251911234567',
+    name: '',
+    email: '',
+    phone: '',
+    bio: '',
+    location: '',
+    skill: '',
     national_id: '',
     national_id_photo: '',
   });
@@ -50,6 +54,14 @@ export default function ArtisanDashboard() {
       fetch(`http://localhost/api/controllers/analytics.php?user_id=${currentUser.id}&role=artisan`)
         .then(res => res.json())
         .then(data => setAnalytics(data))
+        .catch(() => {});
+      fetch(`http://localhost/api/controllers/profile.php?user_id=${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.profile) {
+            setProfile(data.profile);
+          }
+        })
         .catch(() => {});
     }
   });
@@ -87,6 +99,7 @@ export default function ArtisanDashboard() {
             { id: 'orders', label: 'Orders', icon: ShoppingCart },
             { id: 'analytics', label: 'Analytics', icon: TrendingUp },
             { id: 'auctions', label: 'Auctions', icon: TrendingUp },
+            { id: 'profile', label: 'Profile', icon: Users },
           ].map((item) => (
             <button
               key={item.id}
@@ -262,30 +275,34 @@ export default function ArtisanDashboard() {
                                   setEditingProduct(product);
                                   setShowEditProductModal(true);
                                 }}
-                                className="p-2 hover:bg-harar-sand rounded-lg transition"
+                                className="flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
                               >
-                                <Edit className="h-4 w-4 text-harar-brown" />
+                                <Edit className="h-3 w-3" />
+                                Edit
                               </button>
                               <button onClick={async () => {
-                                const updated = { ...product, isActive: !product.isActive };
                                 try {
                                   await fetch(`http://localhost:8000/api/products/${product.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ ...product, is_active: !product.isActive })
                                   });
+                                  updateProduct(product.id, { ...product, isActive: !product.isActive });
                                 } catch (error) { console.error('Toggle error:', error); }
-                              }} className="p-2 hover:bg-harar-sand rounded-lg transition">
-                                {product.isActive ? <ToggleRight className="h-4 w-4 text-green-600" /> : <ToggleLeft className="h-4 w-4 text-gray-400" />}
+                              }} className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg transition ${product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                                {product.isActive ? <ToggleRight className="h-3 w-3" /> : <ToggleLeft className="h-3 w-3" />}
+                                {product.isActive ? 'Available' : 'Sold'}
                               </button>
                               <button onClick={async () => {
                                 if (confirm('Delete this product?')) {
                                   try {
                                     await fetch(`http://localhost:8000/api/products/${product.id}`, { method: 'DELETE' });
+                                    updateProduct(product.id, null);
                                   } catch (error) { console.error('Delete error:', error); }
                                 }
-                              }} className="p-2 hover:bg-red-50 rounded-lg transition">
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                              }} className="flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                                <Trash2 className="h-3 w-3" />
+                                Delete
                               </button>
                             </div>
                           </td>
@@ -452,96 +469,56 @@ export default function ArtisanDashboard() {
               <h1 className="text-3xl font-bold text-harar-brown mb-8">Artisan Profile</h1>
 
               <div className="card max-w-2xl">
-                <form className="space-y-6">
+                <div className="space-y-6">
                   <div>
                     <label className="block text-sm font-semibold text-harar-brown mb-2">Full Name</label>
-                    <input
-                      type="text"
-                      value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                      className="input-field"
-                    />
+                    <p className="text-lg text-harar-brown">{profile.name || 'Not provided'}</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-harar-brown mb-2">Location</label>
-                    <input
-                      type="text"
-                      value={profile.location}
-                      onChange={(e) => setProfile({ ...profile, location: e.target.value })}
-                      className="input-field"
-                    />
+                    <label className="block text-sm font-semibold text-harar-brown mb-2">Email</label>
+                    <p className="text-lg text-harar-brown">{profile.email || 'Not provided'}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-harar-brown mb-2">Phone</label>
-                    <input
-                      type="tel"
-                      value={profile.phone}
-                      onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                      className="input-field"
-                    />
+                    <p className="text-lg text-harar-brown">{profile.phone || 'Not provided'}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-harar-brown mb-2">Location</label>
+                    <p className="text-lg text-harar-brown">{profile.location || 'Not provided'}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-harar-brown mb-2">Skills</label>
+                    <p className="text-lg text-harar-brown">{profile.skill || 'Not provided'}</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-harar-brown mb-2">Bio</label>
+                    <p className="text-lg text-harar-brown">{profile.bio || 'Not provided'}</p>
                   </div>
 
                   <div>
                     <label className="block text-sm font-semibold text-harar-brown mb-2">National ID Number</label>
-                    <input
-                      type="text"
-                      value={profile.national_id}
-                      onChange={(e) => setProfile({ ...profile, national_id: e.target.value })}
-                      className="input-field"
-                      placeholder="Enter your national ID number"
-                    />
+                    <p className="text-lg text-harar-brown">{profile.national_id || 'Not provided'}</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold text-harar-brown mb-2">National ID Photo</label>
-                    <div className="border-2 border-dashed border-harar-sand rounded-xl p-8 text-center">
-                      <Upload className="h-12 w-12 text-harar-brown/40 mx-auto mb-4" />
-                      <p className="text-harar-brown/70 mb-2">Upload your National ID photo</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setProfile({ ...profile, national_id_photo: reader.result as string });
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="hidden"
-                        id="id-upload"
-                      />
-                      <label htmlFor="id-upload" className="btn-secondary mt-4 inline-block cursor-pointer">
-                        Choose File
-                      </label>
+                  {profile.national_id_photo && (
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">National ID Photo</label>
+                      <img src={profile.national_id_photo} alt="National ID" className="w-full max-w-md rounded-lg" />
                     </div>
-                    {profile.national_id_photo && (
-                      <div className="mt-4">
-                        <img src={profile.national_id_photo} alt="National ID" className="w-full max-w-md rounded-lg" />
-                      </div>
-                    )}
-                  </div>
+                  )}
 
                   <button
-                    type="button"
-                    onClick={async () => {
-                      const res = await fetch('http://localhost/api/controllers/profile.php', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ...profile, user_id: 1 }),
-                      });
-                      const data = await res.json();
-                      if (data.success) alert('Profile updated successfully!');
-                    }}
+                    onClick={() => setShowEditProfileModal(true)}
                     className="btn-primary w-full"
                   >
-                    Save Profile
+                    Update Profile
                   </button>
-                </form>
+                </div>
               </div>
             </motion.div>
           )}
@@ -689,8 +666,13 @@ export default function ArtisanDashboard() {
                           accept="image/*"
                           onChange={(e) => {
                             const files = Array.from(e.target.files || []);
-                            const previews = files.map(file => URL.createObjectURL(file));
-                            setImagePreview(previews);
+                            files.forEach(file => {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setImagePreview(prev => [...prev, reader.result as string]);
+                              };
+                              reader.readAsDataURL(file);
+                            });
                           }}
                           className="hidden"
                           id="image-upload"
@@ -943,6 +925,175 @@ export default function ArtisanDashboard() {
                         className="flex-1 btn-primary"
                       >
                         Update Product
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      {/* Edit Profile Modal */}
+      <AnimatePresence>
+        {showEditProfileModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEditProfileModal(false)}
+              className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            >
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white border-b border-harar-sand px-6 py-4 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-harar-brown">Update Profile</h2>
+                  <button
+                    onClick={() => setShowEditProfileModal(false)}
+                    className="p-2 hover:bg-harar-sand rounded-lg transition"
+                  >
+                    <X className="h-6 w-6 text-harar-brown" />
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  <form className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Full Name</label>
+                      <input
+                        type="text"
+                        value={profile.name}
+                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Email</label>
+                      <input
+                        type="email"
+                        value={profile.email}
+                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Phone</label>
+                      <input
+                        type="tel"
+                        value={profile.phone}
+                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Location</label>
+                      <input
+                        type="text"
+                        value={profile.location}
+                        onChange={(e) => setProfile({ ...profile, location: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Skills</label>
+                      <input
+                        type="text"
+                        value={profile.skill}
+                        onChange={(e) => setProfile({ ...profile, skill: e.target.value })}
+                        className="input-field"
+                        placeholder="e.g., Basket Weaving, Pottery"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">Bio</label>
+                      <textarea
+                        value={profile.bio}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                        rows={4}
+                        className="input-field resize-none"
+                        placeholder="Tell us about yourself and your craft"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">National ID Number</label>
+                      <input
+                        type="text"
+                        value={profile.national_id}
+                        onChange={(e) => setProfile({ ...profile, national_id: e.target.value })}
+                        className="input-field"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-harar-brown mb-2">National ID Photo</label>
+                      <div className="border-2 border-dashed border-harar-sand rounded-xl p-8 text-center">
+                        <Upload className="h-12 w-12 text-harar-brown/40 mx-auto mb-4" />
+                        <p className="text-harar-brown/70 mb-2">Upload your National ID photo</p>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                setProfile({ ...profile, national_id_photo: reader.result as string });
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                          id="id-upload-modal"
+                        />
+                        <label htmlFor="id-upload-modal" className="btn-secondary mt-4 inline-block cursor-pointer">
+                          Choose File
+                        </label>
+                      </div>
+                      {profile.national_id_photo && (
+                        <div className="mt-4">
+                          <img src={profile.national_id_photo} alt="National ID" className="w-full max-w-md rounded-lg" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowEditProfileModal(false)}
+                        className="flex-1 px-6 py-3 border-2 border-harar-sand rounded-xl text-harar-brown font-semibold hover:bg-harar-sand transition"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const res = await fetch('http://localhost/api/controllers/profile.php', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...profile, user_id: 1 }),
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            alert('Profile updated successfully!');
+                            setShowEditProfileModal(false);
+                          }
+                        }}
+                        className="flex-1 btn-primary"
+                      >
+                        Save Changes
                       </button>
                     </div>
                   </form>
