@@ -1080,15 +1080,18 @@ export default function ArtisanDashboard() {
                       <button
                         type="button"
                         onClick={async () => {
+                          const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
                           const res = await fetch('http://localhost/api/controllers/profile.php', {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...profile, user_id: 1 }),
+                            body: JSON.stringify({ ...profile, user_id: currentUser.id || 1 }),
                           });
                           const data = await res.json();
                           if (data.success) {
                             alert('Profile updated successfully!');
                             setShowEditProfileModal(false);
+                          } else {
+                            alert('Failed to update profile');
                           }
                         }}
                         className="flex-1 btn-primary"
