@@ -51,11 +51,11 @@ export default function ArtisanDashboard() {
       setProfile(prev => ({ ...prev, name: currentUser.name }));
     }
     if (currentUser.id) {
-      fetch(`http://localhost/api/controllers/analytics.php?user_id=${currentUser.id}&role=artisan`)
+      fetch(`http://localhost:8000/api/analytics?user_id=${currentUser.id}&role=artisan`)
         .then(res => res.json())
         .then(data => setAnalytics(data))
         .catch(() => {});
-      fetch(`http://localhost/api/controllers/profile.php?user_id=${currentUser.id}`)
+      fetch(`http://localhost:8000/api/profile?user_id=${currentUser.id}`)
         .then(res => res.json())
         .then(data => {
           if (data.success && data.profile) {
@@ -1081,17 +1081,21 @@ export default function ArtisanDashboard() {
                         type="button"
                         onClick={async () => {
                           const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                          const res = await fetch('http://localhost/api/controllers/profile.php', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...profile, user_id: currentUser.id || 1 }),
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            alert('Profile updated successfully!');
-                            setShowEditProfileModal(false);
-                          } else {
-                            alert('Failed to update profile');
+                          try {
+                            const res = await fetch('http://localhost:8000/api/profile', {
+                              method: 'PUT',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ ...profile, user_id: currentUser.id || 1 }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              alert('Profile updated successfully!');
+                              setShowEditProfileModal(false);
+                            } else {
+                              alert('Failed to update profile');
+                            }
+                          } catch (error) {
+                            alert('Error updating profile');
                           }
                         }}
                         className="flex-1 btn-primary"
