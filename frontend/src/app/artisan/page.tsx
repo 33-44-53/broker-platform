@@ -206,11 +206,11 @@ export default function ArtisanDashboard() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="card">
                   <h3 className="text-xl font-semibold text-harar-brown mb-4">Product Categories</h3>
-                  <CategoryPieChart data={analytics?.categoryDistribution?.map((c: any) => ({ name: c.category, value: parseInt(c.count) })) || []} />
+                  <CategoryPieChart data={Array.isArray(analytics?.categoryDistribution) ? analytics.categoryDistribution.map((c: any) => ({ name: c.category, value: parseInt(c.count) })) : []} />
                 </div>
                 <div className="card">
                   <h3 className="text-xl font-semibold text-harar-brown mb-4">Monthly Sales</h3>
-                  <SalesBarChart data={analytics?.monthlySales?.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) || []} />
+                  <SalesBarChart data={Array.isArray(analytics?.monthlySales) ? analytics.monthlySales.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) : []} />
                 </div>
               </div>
             </motion.div>
@@ -375,16 +375,16 @@ export default function ArtisanDashboard() {
               <div className="grid grid-cols-1 gap-6">
                 <div className="card">
                   <h3 className="text-xl font-semibold text-harar-brown mb-4">Revenue Trend</h3>
-                  <RevenueLineChart data={analytics?.monthlySales?.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) || []} />
+                  <RevenueLineChart data={Array.isArray(analytics?.monthlySales) ? analytics.monthlySales.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) : []} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="card">
                     <h3 className="text-xl font-semibold text-harar-brown mb-4">Category Performance</h3>
-                    <CategoryPieChart data={analytics?.categoryDistribution?.map((c: any) => ({ name: c.category, value: parseInt(c.count) })) || []} />
+                    <CategoryPieChart data={Array.isArray(analytics?.categoryDistribution) ? analytics.categoryDistribution.map((c: any) => ({ name: c.category, value: parseInt(c.count) })) : []} />
                   </div>
                   <div className="card">
                     <h3 className="text-xl font-semibold text-harar-brown mb-4">Monthly Comparison</h3>
-                    <SalesBarChart data={analytics?.monthlySales?.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) || []} />
+                    <SalesBarChart data={Array.isArray(analytics?.monthlySales) ? analytics.monthlySales.map((m: any) => ({ month: m.month, sales: parseFloat(m.sales) })) : []} />
                   </div>
                 </div>
               </div>
