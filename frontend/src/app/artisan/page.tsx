@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { DollarSign, ShoppingCart, Package, TrendingUp, Plus, Edit, Trash2, ToggleLeft, ToggleRight, LogOut, Home, X, Upload, Image as ImageIcon, Users } from 'lucide-react';
+import { DollarSign, ShoppingCart, Package, TrendingUp, Plus, Edit, Trash2, ToggleLeft, ToggleRight, LogOut, Home, X, Upload, Image as ImageIcon, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
 import MetricCard from '@/components/ui/MetricCard';
 import { CategoryPieChart, SalesBarChart, RevenueLineChart } from '@/charts/Charts';
 import { useProducts } from '@/contexts/ProductContext';
 import { mockOrders, mockChartData } from '@/mock-data/orders';
 import { formatCurrency, getStatusColor } from '@/utils/helpers';
+import { OrdersSection } from './orders-section';
 
 export default function ArtisanDashboard() {
   const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'analytics' | 'auctions' | 'profile'>('overview');
@@ -31,6 +32,9 @@ export default function ArtisanDashboard() {
   });
   const [imagePreview, setImagePreview] = useState<string[]>([]);
   const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [loadingOrderId, setLoadingOrderId] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -320,53 +324,16 @@ export default function ArtisanDashboard() {
             </motion.div>
           )}
 
-          {/* Orders Tab */}
-          {activeTab === 'orders' && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="text-3xl font-bold text-harar-brown mb-8">Order Management</h1>
-
-              <div className="card">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-harar-sand">
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Order ID</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Customer</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Products</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Total</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Status</th>
-                        <th className="text-left py-4 px-4 text-harar-brown font-semibold">Payment</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {artisanOrders.map((order) => (
-                        <tr key={order.id} className="border-b border-harar-sand/50 hover:bg-harar-sand/20">
-                          <td className="py-4 px-4 font-medium text-harar-brown">{order.id}</td>
-                          <td className="py-4 px-4 text-harar-brown/70">{order.buyerName}</td>
-                          <td className="py-4 px-4 text-harar-brown/70">{order.products.length} item(s)</td>
-                          <td className="py-4 px-4 text-harar-brown font-semibold">{formatCurrency(order.total)}</td>
-                          <td className="py-4 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
-                              {order.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}>
-                              {order.paymentStatus}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </motion.div>
-          )}
+          <OrdersSection
+            activeTab={activeTab}
+            artisanOrders={artisanOrders}
+            selectedOrder={selectedOrder}
+            setSelectedOrder={setSelectedOrder}
+            showOrderModal={showOrderModal}
+            setShowOrderModal={setShowOrderModal}
+            loadingOrderId={loadingOrderId}
+            setLoadingOrderId={setLoadingOrderId}
+          />
 
           {/* Analytics Tab */}
           {activeTab === 'analytics' && (
