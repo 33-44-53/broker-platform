@@ -139,3 +139,13 @@ export const api = {
     return res.json();
   },
 };
+
+// Add updateOrder method
+api.updateOrder = async (id: number, data: any) => {
+  const res = await fetch(`http://localhost:8000/api/orders/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};

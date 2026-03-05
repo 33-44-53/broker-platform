@@ -1,0 +1,70 @@
+{/* Orders Tab - REPLACE THE EXISTING ORDERS TAB WITH THIS */}
+{activeTab === 'orders' && (
+  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+    <h1 className="text-3xl font-bold text-harar-brown mb-8">Order Management</h1>
+    <div className="card">
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-harar-sand">
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Order ID</th>
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Buyer</th>
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Total</th>
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Status</th>
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Payment</th>
+              <th className="text-left py-4 px-4 text-harar-brown font-semibold">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {artisanOrders.map((order: any) => (
+              <tr key={order.id} className="border-b border-harar-sand/50 hover:bg-harar-sand/20">
+                <td className="py-4 px-4 font-medium text-harar-brown">{order.id}</td>
+                <td className="py-4 px-4">
+                  <div>
+                    <p className="font-medium text-harar-brown">{order.buyerName}</p>
+                    <p className="text-sm text-harar-brown/60">{order.buyerEmail}</p>
+                  </div>
+                </td>
+                <td className="py-4 px-4 text-harar-brown font-semibold">{formatCurrency(order.total)}</td>
+                <td className="py-4 px-4">
+                  <select
+                    defaultValue={order.status}
+                    onChange={async (e) => {
+                      try {
+                        await fetch(`http://localhost:8000/api/orders/${order.id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: e.target.value })
+                        });
+                        order.status = e.target.value;
+                      } catch (error) { console.error('Update error:', error); }
+                    }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold border-0 cursor-pointer ${getStatusColor(order.status)}`}
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Processing">Processing</option>
+                    <option value="Shipped">Shipped</option>
+                    <option value="Delivered">Delivered</option>
+                  </select>
+                </td>
+                <td className="py-4 px-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.paymentStatus)}`}>
+                    {order.paymentStatus}
+                  </span>
+                </td>
+                <td className="py-4 px-4">
+                  <button
+                    onClick={() => alert(`Buyer: ${order.buyerName}\nEmail: ${order.buyerEmail}\nPhone: ${order.buyerPhone}\nAddress: ${order.deliveryAddress}`)}
+                    className="px-3 py-1 text-xs font-semibold bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition"
+                  >
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </motion.div>
+)}

@@ -30,6 +30,7 @@ export default function ArtisanDashboard() {
     images: [] as string[],
   });
   const [imagePreview, setImagePreview] = useState<string[]>([]);
+  const [loadingProductId, setLoadingProductId] = useState<string | null>(null);
   const [profile, setProfile] = useState({
     name: '',
     email: '',
@@ -281,26 +282,30 @@ export default function ArtisanDashboard() {
                                 Edit
                               </button>
                               <button onClick={async () => {
+                                setLoadingProductId(product.id);
+                                updateProduct(product.id, { ...product, isActive: !product.isActive });
                                 try {
                                   await fetch(`http://localhost:8000/api/products/${product.id}`, {
                                     method: 'PUT',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ ...product, is_active: !product.isActive })
                                   });
-                                  updateProduct(product.id, { ...product, isActive: !product.isActive });
                                 } catch (error) { console.error('Toggle error:', error); }
-                              }} className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg transition ${product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                                setLoadingProductId(null);
+                              }} disabled={loadingProductId === product.id} className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold rounded-lg transition ${product.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'} ${loadingProductId === product.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 {product.isActive ? <ToggleRight className="h-3 w-3" /> : <ToggleLeft className="h-3 w-3" />}
                                 {product.isActive ? 'Available' : 'Sold'}
                               </button>
                               <button onClick={async () => {
                                 if (confirm('Delete this product?')) {
+                                  setLoadingProductId(product.id);
+                                  updateProduct(product.id, null);
                                   try {
                                     await fetch(`http://localhost:8000/api/products/${product.id}`, { method: 'DELETE' });
-                                    updateProduct(product.id, null);
                                   } catch (error) { console.error('Delete error:', error); }
+                                  setLoadingProductId(null);
                                 }
-                              }} className="flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                              }} disabled={loadingProductId === product.id} className={`flex items-center gap-1 px-3 py-1 text-xs font-semibold bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition ${loadingProductId === product.id ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 <Trash2 className="h-3 w-3" />
                                 Delete
                               </button>
@@ -1113,3 +1118,11 @@ export default function ArtisanDashboard() {
     </div>
   );
 }
+
+// OrdersTab component created at: src/app/artisan/orders-tab.tsx
+// Features:
+// - View new orders with buyer details
+// - Accept/reject orders via status dropdown
+// - Update order status: Pending, Processing, Shipped, Delivered
+// - See buyer details (name, email, phone, address)
+// - Real-time API updates to backend
