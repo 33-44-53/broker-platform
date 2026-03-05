@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DollarSign, ShoppingCart, Package, TrendingUp, Plus, Edit, Trash2, ToggleLeft, ToggleRight, LogOut, Home, X, Upload, Image as ImageIcon, Users, Eye } from 'lucide-react';
 import Link from 'next/link';
@@ -49,11 +49,10 @@ export default function ArtisanDashboard() {
   // Mock user - replace with actual auth
   const isVerified = true; // Get from auth context
 
-  useState(() => {
+  useEffect(() => {
     const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
     if (currentUser.name) {
       setUserName(currentUser.name);
-      setProfile(prev => ({ ...prev, name: currentUser.name }));
     }
     if (currentUser.id) {
       fetch(`http://localhost:8000/api/analytics?user_id=${currentUser.id}&role=artisan`)
@@ -69,7 +68,7 @@ export default function ArtisanDashboard() {
         })
         .catch(() => {});
     }
-  });
+  }, []);
 
   if (!isVerified) {
     return (
@@ -1063,6 +1062,14 @@ export default function ArtisanDashboard() {
                             if (data.success) {
                               alert('Profile updated successfully!');
                               setShowEditProfileModal(false);
+                              fetch(`http://localhost:8000/api/profile?user_id=${currentUser.id}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                  if (data.success && data.profile) {
+                                    setProfile(data.profile);
+                                  }
+                                })
+                                .catch(() => {});
                             } else {
                               alert('Failed to update profile');
                             }
