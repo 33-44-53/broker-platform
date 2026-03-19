@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\ReviewController;
 use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\AuctionController;
 use App\Http\Controllers\Api\AnalyticsController;
@@ -32,5 +33,5 @@ Route::middleware('api')->group(function () {
     Route::post('/auctions/approve', [AuctionController::class, 'approve']);
     Route::post('/auctions/reject', [AuctionController::class, 'reject']);
 
-    Route::get('/analytics', [AnalyticsController::class, 'index']);
-});
+    Route::post('/reviews', [ReviewController::class, 'store']);
+    Route::get('/reviews', [ReviewController::class, 'index']);
