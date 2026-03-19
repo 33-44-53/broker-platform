@@ -33,44 +33,40 @@ export default function CartPage() {
 
     try {
       const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-      const params = new URLSearchParams();
-      params.append('buyer_id', String(currentUser.id || 1));
-      params.append('buyer_name', shippingInfo.name);
-      params.append('buyer_phone', shippingInfo.phone);
-      params.append('buyer_address', shippingInfo.address);
-      params.append('buyer_city', shippingInfo.city);
-      params.append('products', JSON.stringify(items.map(item => ({
-        product_id: item.id,
-        product_name: item.name,
-        quantity: item.quantity,
-        price: item.discount ? item.price * (1 - item.discount / 100) : item.price,
-      }))));
-      params.append('total', String(total));
-      params.append('payment_method', paymentMethod);
-      params.append('status', 'pending');
-
-      const res = await fetch('http://localhost/api/controllers/orders.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: params.toString(),
-      });
-
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error('API returned invalid JSON:', text);
-        alert('Server error: ' + text.substring(0, 100));
+      if (!currentUser.id) {
+        alert('Please log in to place an order');
         return;
       }
 
+      const orderData = {
+        buyer_id: currentUser.id,
+        buyer_name: shippingInfo.name,
+        total,
+        status: 'pending',
+        payment_method: paymentMethod,
+        delivery_address: shippingInfo.address,
+        order_items: items.map(item => ({
+          product_id: item.id,
+          product_name: item.name,
+          quantity: item.quantity,
+          price: item.discount ? item.price * (1 - item.discount / 100) : item.price,
+        })),
+      };
+
+      const res = await fetch('http://localhost:8000/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData),
+      });
+
+      const data = await res.json();
+
       if (data.success) {
-        setOrderId(data.order_id || data.order_number || 'ORD-' + Date.now());
+        setOrderId(data.order?.order_number || 'ORD-' + Date.now());
         setStep('confirmation');
         clearCart();
       } else {
-        alert('Failed to place order: ' + (data.message || data.error || 'Unknown error'));
+        alert('Failed to place order: ' + (data.message || 'Unknown error'));
       }
     } catch (err) {
       console.error('Order error:', err);
@@ -113,7 +109,7 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-harar-cream">
-      <div className="bg-white shadow-md sticky top-0 z-40">
+      <div className="bg-transparent sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <Link href="/marketplace" className="flex items-center gap-2 text-harar-brown hover:text-harar-gold transition">

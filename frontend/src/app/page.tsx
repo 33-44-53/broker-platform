@@ -2,45 +2,88 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ShoppingBag, Users, TrendingUp, Star, MapPin, Heart } from 'lucide-react';
+import { ShoppingBag, Users, TrendingUp, Star, MapPin, Heart, Menu, X } from 'lucide-react';
 import { mockProducts } from '@/mock-data/products';
 import { formatCurrency, calculateDiscount } from '@/utils/helpers';
 import { useProducts } from '@/contexts/ProductContext';
+import { useState } from 'react';
 
 export default function Home() {
   const { products } = useProducts();
   const featuredProducts = products.slice(0, 3);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+      <nav className="absolute top-0 left-0 right-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
-              <ShoppingBag className="h-8 w-8 text-harar-gold" />
-              <span className="text-2xl font-bold text-harar-brown">Harar Artisan</span>
+              <ShoppingBag className="h-8 w-8 text-white drop-shadow-md" />
+              <span className="text-2xl font-bold text-white drop-shadow-lg">Harar Artisan</span>
             </div>
+            
+            {/* Desktop Navigation */}
             <div className="hidden md:flex space-x-8">
-              <Link href="/marketplace" className="text-harar-brown hover:text-harar-gold transition">
+              <Link href="/marketplace" className="text-white hover:text-harar-gold transition font-medium drop-shadow-md">
                 Marketplace
               </Link>
-              <Link href="/auction" className="text-harar-brown hover:text-harar-gold transition">
+              <Link href="/auction" className="text-white hover:text-harar-gold transition font-medium drop-shadow-md">
                 Auctions
               </Link>
-              <Link href="/artisan" className="text-harar-brown hover:text-harar-gold transition">
+              <Link href="/artisan" className="text-white hover:text-harar-gold transition font-medium drop-shadow-md">
                 For Artisans
               </Link>
             </div>
-            <div className="flex space-x-4">
-              <Link href="/auth" className="px-6 py-2 border-2 border-harar-gold text-harar-brown rounded-full hover:bg-harar-gold hover:text-white transition font-semibold">
+            
+            {/* Desktop Auth Buttons */}
+            <div className="hidden md:flex space-x-4">
+              <Link href="/auth" className="px-6 py-2 border-2 border-white text-white rounded-full hover:bg-white hover:text-harar-brown transition font-semibold backdrop-blur-sm">
                 Login
               </Link>
-              <Link href="/auth" className="btn-primary">
+              <Link href="/auth" className="px-6 py-2 bg-harar-gold hover:bg-harar-rust text-white rounded-full transition font-semibold shadow-lg hover:shadow-xl">
                 Get Started
               </Link>
             </div>
+            
+            {/* Mobile Menu Button */}
+            <button 
+              className="md:hidden p-2 text-white drop-shadow-md"
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            >
+              {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
           </div>
+          
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="md:hidden bg-harar-brown/95 backdrop-blur-md rounded-b-2xl pb-4 px-4"
+            >
+              <div className="flex flex-col space-y-3 pt-2">
+                <Link href="/marketplace" className="text-white hover:text-harar-gold transition font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+                  Marketplace
+                </Link>
+                <Link href="/auction" className="text-white hover:text-harar-gold transition font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+                  Auctions
+                </Link>
+                <Link href="/artisan" className="text-white hover:text-harar-gold transition font-medium py-2" onClick={() => setMobileMenuOpen(false)}>
+                  For Artisans
+                </Link>
+                <div className="flex flex-col space-y-2 pt-2 border-t border-white/20">
+                  <Link href="/auth" className="px-6 py-2 border-2 border-white text-white rounded-full hover:bg-white hover:text-harar-brown transition font-semibold text-center" onClick={() => setMobileMenuOpen(false)}>
+                    Login
+                  </Link>
+                  <Link href="/auth" className="px-6 py-2 bg-harar-gold hover:bg-harar-rust text-white rounded-full transition font-semibold text-center" onClick={() => setMobileMenuOpen(false)}>
+                    Get Started
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </nav>
 

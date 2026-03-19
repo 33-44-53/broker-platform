@@ -13,11 +13,10 @@ return new class extends Migration
             $table->string('order_number')->unique();
             $table->foreignId('buyer_id')->constrained('users')->onDelete('cascade');
             $table->string('buyer_name');
-            $table->foreignId('artisan_id')->constrained('users')->onDelete('cascade');
             $table->decimal('total', 10, 2);
             $table->enum('status', ['pending', 'processing', 'shipped', 'delivered', 'cancelled'])->default('pending');
             $table->enum('payment_status', ['pending', 'paid', 'failed'])->default('pending');
-            $table->enum('payment_method', ['telebirr', 'cbe', 'bank', 'cash']);
+            $table->string('payment_method');
             $table->text('delivery_address');
             $table->timestamps();
         });

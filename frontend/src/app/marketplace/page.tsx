@@ -49,21 +49,33 @@ export default function MarketplacePage() {
     .filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
-    <div className="min-h-screen bg-harar-cream">
-      {/* Header */}
-      <div className="bg-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <button onClick={() => router.back()} className="flex items-center gap-2 text-harar-brown hover:text-harar-gold transition cursor-pointer">
-              <ArrowLeft className="h-5 w-5" />
-              <span className="font-semibold">Back</span>
-            </button>
-            <h1 className="text-2xl font-bold text-harar-brown">Marketplace</h1>
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-harar-sand rounded-lg transition relative">
-                <Heart className="h-6 w-6 text-harar-brown" />
-                <span className="absolute -top-1 -right-1 bg-harar-rust text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+    <div className="min-h-screen">
+      {/* Header with Background */}
+      <div className="relative bg-gradient-to-br from-harar-sand via-harar-cream to-harar-clay pb-8">
+        <div className="absolute inset-0">
+          <img 
+            src="/istockphoto-1459429078-612x612.jpg" 
+            alt="Harar crafts" 
+            className="w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+        
+        {/* Navigation */}
+        <div className="relative z-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <button onClick={() => router.back()} className="flex items-center gap-2 text-white hover:text-harar-gold transition cursor-pointer font-medium drop-shadow-md">
+                <ArrowLeft className="h-5 w-5" />
+                <span className="font-semibold">Back</span>
               </button>
+              <h1 className="text-2xl font-bold text-white drop-shadow-lg">Marketplace</h1>
+              <div className="flex items-center gap-4">
+                <button className="p-2 hover:bg-white/20 rounded-lg transition relative backdrop-blur-sm">
+                  <Heart className="h-6 w-6 text-white drop-shadow-md" />
+                  <span className="absolute -top-1 -right-1 bg-harar-rust text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

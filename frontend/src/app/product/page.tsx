@@ -16,17 +16,27 @@ export default function ProductPage() {
   const similarProducts = mockProducts.slice(1, 4);
 
   return (
-    <div className="min-h-screen bg-harar-cream">
-      <div className="bg-white shadow-md sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <Link href="/marketplace" className="flex items-center gap-2 text-harar-brown hover:text-harar-gold transition">
+    <div className="min-h-screen">
+      {/* Header with Background */}
+      <div className="relative bg-gradient-to-br from-harar-sand via-harar-cream to-harar-clay pb-8">
+        <div className="absolute inset-0">
+          <img 
+            src="/istockphoto-1459429078-612x612.jpg" 
+            alt="Harar crafts" 
+            className="w-full h-full object-cover opacity-40"
+          />
+          <div className="absolute inset-0 bg-black/20"></div>
+        </div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <Link href="/marketplace" className="inline-flex items-center gap-2 text-white hover:text-harar-gold transition font-semibold drop-shadow-md">
             <ArrowLeft className="h-5 w-5" />
-            <span className="font-semibold">Back to Marketplace</span>
+            <span>Back to Marketplace</span>
           </Link>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 -mt-4 relative z-20">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
             <div className="card mb-4">

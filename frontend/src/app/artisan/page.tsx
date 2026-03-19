@@ -12,7 +12,7 @@ import { formatCurrency, getStatusColor } from '@/utils/helpers';
 import { OrdersSection } from './orders-section';
 
 export default function ArtisanDashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'analytics' | 'auctions' | 'profile'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'products' | 'orders' | 'auctions'>('overview');
   const [showAddProductModal, setShowAddProductModal] = useState(false);
   const [showEditProductModal, setShowEditProductModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -21,6 +21,7 @@ export default function ArtisanDashboard() {
   const { products, addProduct, updateProduct } = useProducts();
   const [userName, setUserName] = useState('Artisan User');
   const [analytics, setAnalytics] = useState<any>(null);
+  const [artisanOrders, setArtisanOrders] = useState<any[]>([]);
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -67,6 +68,14 @@ export default function ArtisanDashboard() {
           }
         })
         .catch(() => {});
+      fetch(`http://localhost:8000/api/orders?artisan_id=${currentUser.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setArtisanOrders(data);
+          }
+        })
+        .catch(() => {});
     }
   }, []);
 
@@ -84,13 +93,11 @@ export default function ArtisanDashboard() {
   }
 
   const artisanProducts = products.filter(p => (p as any).artisanId === 1 || (p as any).artisan_id === 1);
-  const artisanOrders = mockOrders.filter(o => o.artisanId === 'a1');
-  const totalRevenue = artisanOrders.reduce((sum, order) => sum + order.total, 0);
 
   return (
     <div className="min-h-screen bg-harar-cream">
       {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50">
+      <div className="fixed left-0 top-0 h-full w-64 bg-transparent shadow-lg z-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-harar-brown mb-2">Artisan Portal</h2>
           <p className="text-sm text-harar-brown/60">{userName}</p>
@@ -101,9 +108,7 @@ export default function ArtisanDashboard() {
             { id: 'overview', label: 'Dashboard', icon: Home },
             { id: 'products', label: 'Products', icon: Package },
             { id: 'orders', label: 'Orders', icon: ShoppingCart },
-            { id: 'analytics', label: 'Analytics', icon: TrendingUp },
             { id: 'auctions', label: 'Auctions', icon: TrendingUp },
-            { id: 'profile', label: 'Profile', icon: Users },
           ].map((item) => (
             <button
               key={item.id}
@@ -374,7 +379,7 @@ export default function ArtisanDashboard() {
                   const productId = formData.get('product_id') as string;
                   const product = artisanProducts.find(p => p.id == productId);
                   const currentUser = JSON.parse(localStorage.getItem('currentUser') || '{}');
-                  const res = await fetch('http://localhost/api/controllers/auctions.php', {
+                  const res = await fetch('http://localhost:8000/api/auctions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

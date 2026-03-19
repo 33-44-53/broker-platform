@@ -133,7 +133,7 @@ export default function ArtisanContent() {
 
   return (
     <div className="min-h-screen bg-harar-cream">
-      <div className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50">
+      <div className="fixed left-0 top-0 h-full w-64 bg-transparent shadow-lg z-50">
         <div className="p-6">
           <h2 className="text-2xl font-bold text-harar-brown mb-2">Artisan Portal</h2>
           <p className="text-sm text-harar-brown/60">{userName}</p>

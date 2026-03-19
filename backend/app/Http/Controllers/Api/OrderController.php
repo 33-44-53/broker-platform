@@ -9,16 +9,30 @@ class OrderController
 {
     public function store(Request $request)
     {
-        $order = Order::create($request->all());
+        $orderData = $request->except('order_items');
+        $orderData['order_number'] = 'ORD-' . time() . '-' . rand(1000, 9999);
+        
+        $order = Order::create($orderData);
+        
+        if ($request->order_items) {
+            foreach ($request->order_items as $item) {
+                $order->items()->create($item);
+            }
+        }
+        
         return response()->json(['success' => true, 'order' => $order]);
     }
 
     public function index(Request $request)
     {
         if ($request->artisan_id) {
-            $orders = Order::where('artisan_id', $request->artisan_id)->get();
+            $orders = Order::whereHas('items', function ($query) use ($request) {
+                $query->whereIn('product_id', function ($subquery) use ($request) {
+                    $subquery->select('id')->from('products')->where('artisan_id', $request->artisan_id);
+                });
+            })->with('items')->get();
         } else {
-            $orders = Order::where('buyer_id', $request->buyer_id)->get();
+            $orders = Order::where('buyer_id', $request->buyer_id)->with('items')->get();
         }
         return response()->json($orders);
     }
