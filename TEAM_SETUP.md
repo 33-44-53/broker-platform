@@ -30,12 +30,14 @@ php artisan key:generate
 Edit `.env` file:
 ```env
 DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_HOST=localhost
+DB_PORT=3307
 DB_DATABASE=broker_platform
 DB_USERNAME=root
 DB_PASSWORD=your_mysql_password
 ```
+
+**Note**: Use `localhost` (not 127.0.0.1) and port `3307` for XAMPP MySQL.
 
 ### 5. Create Database
 In phpMyAdmin or MySQL command line:
